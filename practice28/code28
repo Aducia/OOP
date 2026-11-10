@@ -1,0 +1,79 @@
+using System;
+using System.Collections.Generic;
+
+  // 1. спільний інтерфейс для збереження даних.
+    // І MemoryRepository і ConsoleRepository мають метод Save,тому BookService зможе працювати з будь-яким із них.
+
+namespace BookCatalogApp
+{
+    public interface IBookRepository
+    {
+        void Save(string bookTitle);
+    }
+
+    // 2. Перший варіант: зберігає книги у звичайному списку в пам'яті.
+    public class MemoryRepository : IBookRepository
+    {
+        private List<string> books = new List<string>();
+
+        public void Save(string bookTitle)
+        {
+            books.Add(bookTitle);
+            Console.WriteLine($"MemoryRepository: додано «{bookTitle}».");
+            Console.WriteLine($"Книг у пам’яті: {books.Count}");
+        }
+    }
+
+    // 3. Другий варіант: просто виводить інформацію на екран.
+    public class ConsoleRepository : IBookRepository
+    {
+        public void Save(string bookTitle)
+        {
+            Console.WriteLine($"ConsoleRepository: збережено «{bookTitle}».");
+        }
+    }
+
+    // 4. Основний сервіс - BookService. 
+    // Він НЕ створює MemoryRepository чи ConsoleRepository всередині себе, він приймає їх ззовні через конструктор!
+    public class BookService
+    {
+        private readonly IBookRepository _repository;
+
+        //Constructor Injection
+        public BookService(IBookRepository repository)
+        {
+            _repository = repository;
+        }
+
+        public void AddBook(string title)
+        {
+            _repository.Save(title);
+        }
+    }
+
+    // 5. Точка входу в програму
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            // Налаштовуємо консоль на підтримку української мови
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
+
+            Console.WriteLine("Демонстрація:");
+
+            // А: Використовуємо сервіс із MemoryRepository
+            IBookRepository memoryRepo = new MemoryRepository();
+            BookService service1 = new BookService(memoryRepo);
+            service1.AddBook("Чистий код");
+
+            Console.WriteLine();
+
+            // Б: Використовуємо той самий BookService, але підсовуємо ConsoleRepository 
+            IBookRepository consoleRepo = new ConsoleRepository();
+            BookService service2 = new BookService(consoleRepo);
+            service2.AddBook("Патерни проєктування");
+
+            Console.WriteLine("\nКод BookService не змінювався.");
+        }
+    }
+}
